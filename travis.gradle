@@ -1,0 +1,159 @@
+import java.text.SimpleDateFormat
+import groovy.io.FileType
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+  classifier = 'javadoc'
+  from 'build/docs/javadoc'
+  manifest {
+    attributes("Implementation-Title": project.name,
+        "Implementation-Version": projectVersion(),
+        "SCM-Revision": gitRevision()
+    )
+  }
+}
+
+task sourcesJar(type: Jar) {
+  classifier = 'sources'
+  from sourceSets.main.allSource
+  manifest {
+    attributes("Implementation-Title": project.name,
+        "Implementation-Version": projectVersion(),
+        "SCM-Revision": gitRevision()
+    )
+  }
+}
+
+subprojects {
+  jar {
+    //TODO: Share the source and binary manifest code!!! so changes are done in one place
+    manifest {
+      attributes("Implementation-Title": project.name,
+          "Implementation-Version": projectVersion(),
+          "SCM-Revision": gitRevision()
+      )
+    }
+  }
+
+  artifacts {
+    archives jar
+    archives javadocJar
+    archives sourcesJar
+  }
+
+  model {
+    tasks.generatePomFileForMavenPublication {
+      destination = file("$buildDir/libs/" + project.getName() + "-" + projectVersion() + ".pom")
+    }
+  }
+
+  publishing {
+    publications {
+      maven(MavenPublication) {
+        from components.java
+        pom.withXml {
+          asNode().dependencies.'*'.findAll() {
+            it.scope.text() == 'runtime' && project.configurations.compile.allDependencies.find { dep ->
+              dep.name == it.artifactId.text()
+            }
+          }.each() {
+            it.scope*.value = 'compile'
+          }
+        }
+      }
+    }
+  }
+}
+
+task copyBintrayTemplate (type: Copy) {
+  from projectDir
+  into "${projectDir}/output"
+  include 'bintray.json.template'
+  rename { file -> 'bintray.json' }
+  expand (version: projectVersion(), date: releaseDate(), tag: tagName (), files:filesToUpload())
+}
+
+def filesToUpload() {
+
+  def sourceProjects = subprojects.findAll()
+
+  StringBuffer sb = new StringBuffer()
+
+  for(Project p : sourceProjects) {
+    def uploadPattern = gavToPath() + "${p.getName()}/${project.version}/\$1"
+    sb.append("{\"includePattern\" : \"").append(p.getPath().substring(1).replaceAll(":", "/")).append("/build/libs/(.*jar)\",\"uploadPattern\": \"").append(uploadPattern).append("\"},\n")
+    sb.append("{\"includePattern\" : \"").append(p.getPath().substring(1).replaceAll(":", "/")).append("/build/libs/(.*pom)\",\"uploadPattern\": \"").append(uploadPattern).append("\"},\n")
+  }
+
+  // remove last comma
+  sb.deleteCharAt(sb.length() - 1)
+  sb.deleteCharAt(sb.length() - 1)
+  sb.append("\n")
+
+  return sb.toString()
+}
+
+def gavToPath() {
+  return "${gavGroup}".replace(".", "/") + "/"
+}
+
+def projectVersion() {
+  // is there a travis tag?
+  if(System.getenv("TRAVIS_TAG") != null && System.getenv("TRAVIS_TAG").length() > 0) {
+    // we are building a tag on travis
+    String tagName = System.getenv("TRAVIS_TAG")
+
+    println "Travis tag build"
+
+    if(tagName.startsWith("${majorMinorVersion}")) {
+      //we're building a tag in line with the current expected version'
+      project.version = tagName
+      println "Travis tag build: version as expected ${project.version}"
+    } else {
+      // name is messed up
+      project.version = "${majorMinorVersion}.${tagName}"
+      println "Travis tag build: version not as expected: ${project.version}"
+    }
+  } else if(System.getenv("TRAVIS") != null && System.getenv("TRAVIS").length() > 0) {
+    // travis master build
+    project.version = "${majorMinorVersion}.SNAPSHOT"
+    println "Travis master build: ${project.version}"
+  } else {
+    //local build
+    project.version = "${majorMinorVersion}-SNAPSHOT"
+    println "Local build: ${project.version}"
+  }
+
+  return project.version
+}
+
+def releaseDate() {
+  new SimpleDateFormat("yyyy-MM-dd").format (new Date())
+}
+
+def tagName() {
+  listDir()
+  return System.getenv("TRAVIS_TAG")
+}
+
+def listDir() {
+
+  def list = []
+
+  def dir = new File(".")
+  dir.eachFileRecurse(FileType.FILES) { file ->
+    list << file
+  }
+
+
+  list.each {
+    println it.path
+  }
+
+}
+
+def gitRevision() {
+  def git_cmd = "git rev-parse HEAD"
+  def git_proc = git_cmd.execute()
+  return git_proc.text.trim()
+}
+
