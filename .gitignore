@@ -30,3 +30,4 @@ build
 .gradle
 .metadata
 .classpath
+/.idea/

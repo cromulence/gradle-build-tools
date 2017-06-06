@@ -40,7 +40,7 @@ class TravisBintrayPlugin implements Plugin<Project> {
                     PublishingExtension pext = (PublishingExtension) project.getExtensions().getByName('publishing')
                     try {
                         MavenPublication pub = (MavenPublication) pext.publications.getByName('Maven')
-                        pub.setGroupId(getProjectProperty(project, "gavGroup"))
+
                         println("Adding jars to artifacts for project: " + project.getName())
                         addSourceJarToArtifacts(project, pub)
                         addJavadocJarToArtifacts(project, pub)
@@ -61,6 +61,7 @@ class TravisBintrayPlugin implements Plugin<Project> {
                     project.publishing.publications {
                         Maven(MavenPublication) {
                             from project.components.java
+                            groupId getProjectProperty(project, "gavGroup")
                         }
                     }
                 }
@@ -109,7 +110,7 @@ class TravisBintrayPlugin implements Plugin<Project> {
 
         final String filesToUpload = filesToUpload(project)
 
-        final String desc = getProjectProperty(project, "desc")
+        final String description = getProjectProperty(project, "description")
         final String githubUser = getProjectProperty(project, "githubUser")
         final String githubRepo = getProjectProperty(project, "githubRepo")
 
@@ -119,7 +120,7 @@ class TravisBintrayPlugin implements Plugin<Project> {
             into project.getBuildDir()
             include "bintray.json.template"
             rename { file -> 'bintray.json' }
-            expand(version: projectVersion, date: releaseDate(), tag: tagName(), files: filesToUpload, desc: desc,
+            expand(version: projectVersion, date: releaseDate(), tag: tagName(), files: filesToUpload, description: description,
                 githubUser: githubUser, githubRepo: githubRepo)
         }
     }
