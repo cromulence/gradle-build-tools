@@ -109,13 +109,18 @@ class TravisBintrayPlugin implements Plugin<Project> {
 
         final String filesToUpload = filesToUpload(project)
 
+        final String desc = getProjectProperty(project, "desc")
+        final String githubUser = getProjectProperty(project, "githubUser")
+        final String githubRepo = getProjectProperty(project, "githubRepo")
+
         project.task("copyBintrayTemplate", type: Copy){
             from project.zipTree(project.buildscript.configurations.getByName("classpath").
                 filter({it.name.startsWith('travis-bintray')}).singleFile)
             into project.getBuildDir()
             include "bintray.json.template"
             rename { file -> 'bintray.json' }
-            expand(version: projectVersion, date: releaseDate(), tag: tagName(), files: filesToUpload)
+            expand(version: projectVersion, date: releaseDate(), tag: tagName(), files: filesToUpload, desc: desc,
+                githubUser: githubUser, githubRepo: githubRepo)
         }
     }
 
