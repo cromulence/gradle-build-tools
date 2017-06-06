@@ -40,7 +40,7 @@ class TravisBintrayPlugin implements Plugin<Project> {
                     PublishingExtension pext = (PublishingExtension) project.getExtensions().getByName('publishing')
                     try {
                         MavenPublication pub = (MavenPublication) pext.publications.getByName('Maven')
-
+                        pub.setGroupId(getProjectProperty(project, "gavGroup"))
                         println("Adding jars to artifacts for project: " + project.getName())
                         addSourceJarToArtifacts(project, pub)
                         addJavadocJarToArtifacts(project, pub)
