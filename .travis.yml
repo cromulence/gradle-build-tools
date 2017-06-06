@@ -1,0 +1,25 @@
+language: java
+jdk:
+- oraclejdk8
+before_deploy:
+- "./gradlew --stacktrace sourceJar javadocJar generatePomFileForMavenPublication
+  copyBintrayTemplate"
+deploy:
+- provider: s3
+  on:
+    all_branches: true
+  upload-dir: output
+  bucket: cromulence.travis.gradle-build-tools
+  region: eu-west-2
+  skip_cleanup: true
+  access_key_id: AKIAJAAE254CVSJG4RTQ
+  secret_access_key:
+    secure: fE0gqIb6vV9JlZhMGquawQOHU6VsbszbPysKPhbBe+HnnoHsAJgrmVq5lfd6nYWdswSQECHABe6zANDsq9WFbXBujhu7p9MA6JABvU29GSRCg1gTbfuNet86TQgS4pWhkc1vANOOyU4Xm+Q4wmr0St7JEmY3HWvJAs7uWVg6GE2irTBzfu9SxR5SAMxKeHn9ucVdCL3B0YKlhdVEmUTeS35Jc3Nk3TWoGK5PCVXffM1GYmM7EhOX08n6yydb0LNfVUH5uefSeAWRrIX2XHTKRm2UCYulqvGeQMHceycNJHhl1apZOTp7byqF4zqWpSbkLsoKwuWihi7imWJV9z1n1/KCazw/gEiy9QBZ78ib+OsrSKUPNN2rJ17Lr74J4wthacGT4JREKxs+ZT34U4P5NZ33zpy/s8H14uZG8e8Wvz/dVx7kgoBQAs1xmfEjRsixdCd8Y57n7iIfCiGbIEPwevzDyycX6AIbQSHnWnGj25h2pqPDWPqBYMaXh20GujfwEN18UVRrNoXwqdjvtZeoRnhGGWn5HprJ0MTgCBFnSzeAKzUlEHhIfAgkpoPMKf6rEU1xI0EDxJ9AyegMRqaEQ+sUDQfBSzQa/ZXF4m0XvmCgD7QS0K9TSs9dpbflTqNWbhhJBppy5D50xa7n+fJMFbUDmhBaf0gz1c++mkmoI8M=
+- provider: bintray
+  on:
+    tags: true
+  file: build/bintray.json
+  user: cromulence
+  key:
+    secure: hTGtj7fqty0//ElUHhTaG7PnVPfWsIc9pNPX6a2bh7QV1d+gICcg4hlKI/nvJKQGV8itE5omTRPJ1TKa856P35cqaPMxGnbqoRnW6nJ3NvrRSvUMkqaUqRushTeedvSd7ss57zLshBvVADEHnlGF3RAnHAOBkE8HECPYcoqtoBV1xv85XiacuUiCzFZFua7qAhckuQgoVHIrJhnWiwHy4JzQEnIdHa6YCC1RdfbNesUGGQ2lmWS2OBo7SeKWUt7PxDSFkk5HYDl3gE5syG8AA8RvtW2HqJ4RE6LNqY6E3NbNOYsFCt9s+Ifmbs9DYyTXfdElhpjydWCTr4GjHyKOnInVRO6u2WYtvLKP0JadjQut8YxdjD4ul0ioqNZ82caf7TTWSlKo87P//ysGPlqKc8NymKChvLoWm9vjtS2Acmuz92FuQHBkiYUBSEWwzla1PRey7TssED9eUfNzgMcIvxg5qW+m4QGh+38NBs0j9UkiTKPL0kivnbb2Pic4r7gxV2QMuYAQimauOAOOq7AQuWXhCzgAa2URZSTXoLttJZ/csfcM963bFla9w4v0SyNSk/fytNEWGcp38le6qftRfJcd/9H0LObbqr8yo5fP6rJFwvgdcHd+1HDFD8c9z7PRh40oHuBz6d9XpT2P0P4/VfttAXhWhh0q9a+jt7SB1ms=
+  dry-run: false
