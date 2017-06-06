@@ -4,6 +4,9 @@ buildscript {
         jcenter()
         mavenCentral()
     }
+    dependencies {
+        classpath files('./travis-bintray.jar')
+    }
 }
 
 allprojects {
@@ -13,6 +16,8 @@ allprojects {
     apply plugin: 'idea'
     apply plugin: 'maven'
     apply plugin: 'maven-publish'
+    apply plugin: 'travis-bintray'
+    apply plugin: 'groovy'
 }
 
 task wrapper(type: Wrapper) {
